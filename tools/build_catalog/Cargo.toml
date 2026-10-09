@@ -1,0 +1,10 @@
+[package]
+name = "build-catalog"
+description = "Preprocesses a raw star catalogue into data/catalog.bin."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+tracker-core.workspace = true

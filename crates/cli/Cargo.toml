@@ -1,0 +1,10 @@
+[package]
+name = "tracker-cli"
+description = "Native benchmark runner for tracker-core."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+tracker-core.workspace = true

@@ -1,0 +1,29 @@
+[package]
+name = "tracker-core"
+description = "Star tracker core: no I/O, no printing, no wasm dependencies."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+bincode.workspace = true
+libm.workspace = true
+nalgebra.workspace = true
+rand.workspace = true
+rand_chacha.workspace = true
+rand_distr.workspace = true
+serde.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+proptest.workspace = true
+
+[[bench]]
+name = "centroid"
+harness = false
+
+[[bench]]
+name = "pairdb"
+harness = false

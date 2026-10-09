@@ -1,0 +1,19 @@
+# Rust build output
+/target/
+
+# Downloaded raw catalogue; data/catalog.bin itself is committed.
+/data/raw/
+
+# wasm-pack output
+/web/src/pkg/
+
+# Node and Vite output
+node_modules/
+/web/dist/
+
+# Benchmark output from `tracker-cli bench`
+/bench_*.csv
+/bench_*.json
+
+# wasm-pack output for the Node parity check
+/crates/wasm/pkg-node/

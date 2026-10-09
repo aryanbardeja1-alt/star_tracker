@@ -1,0 +1,7 @@
+# Pins the project to the rustup-managed toolchain and makes sure the WASM
+# target and the lint tools are present. Without this, a PATH that finds a
+# standalone (non-rustup) cargo first cannot build crates/wasm at all.
+[toolchain]
+channel = "stable"
+components = ["clippy", "rustfmt"]
+targets = ["wasm32-unknown-unknown"]

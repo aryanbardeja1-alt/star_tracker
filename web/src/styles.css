@@ -1,0 +1,509 @@
+/* Dark, scientific, monospace for anything numeric. */
+:root {
+  color-scheme: dark;
+  --bg: #0b0e14;
+  --panel: #10141d;
+  --panel-2: #151b26;
+  --line: #222a38;
+  --fg: #c9d2e3;
+  --dim: #76829a;
+  --accent: #7fd1ff;
+  --good: #52d98b;
+  --bad: #ff6b6b;
+  --warn: #ffc457;
+  --pyramid: #c792ea;
+  --mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+h1 {
+  font-size: 1.05rem;
+  font-weight: 650;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+header .sub,
+header .build {
+  color: var(--dim);
+  font-size: 0.8rem;
+}
+
+header .build {
+  font-family: var(--mono);
+  margin-left: auto;
+}
+
+/* --- tabs --- */
+
+nav[role="tablist"] {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0 1.1rem;
+  border-bottom: 1px solid var(--line);
+}
+
+nav button {
+  appearance: none;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--dim);
+  font: inherit;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+}
+
+nav button[aria-selected="true"] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+}
+
+nav button:hover {
+  color: var(--fg);
+}
+
+main {
+  padding: 1.1rem;
+  max-width: 1500px;
+}
+
+/* --- panels and controls --- */
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.85rem;
+}
+
+.panel h2 {
+  font-size: 0.74rem;
+  font-weight: 650;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin: 0 0 0.7rem;
+}
+
+.controls {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.74rem;
+  color: var(--dim);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+input,
+select,
+button.action {
+  background: var(--panel-2);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.4rem 0.55rem;
+  font: 13px/1.2 var(--mono);
+}
+
+input:focus,
+select:focus,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+input[type="number"],
+input[type="text"] {
+  width: 13ch;
+}
+
+button.action {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 0.45rem 0.8rem;
+}
+
+button.action:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: #fff;
+}
+
+button.action.primary {
+  background: #16314a;
+  border-color: #27608c;
+  color: #e7f6ff;
+}
+
+button.action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+details.advanced {
+  margin-top: 0.7rem;
+  border-top: 1px solid var(--line);
+  padding-top: 0.6rem;
+}
+
+details.advanced summary {
+  cursor: pointer;
+  color: var(--dim);
+  font-size: 0.78rem;
+}
+
+.grid-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+}
+
+/* --- layout --- */
+
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: 0.9rem;
+  margin-top: 0.9rem;
+  align-items: start;
+}
+
+@media (max-width: 950px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+/* --- canvases --- */
+
+.canvas-wrap {
+  position: relative;
+  background: #05070b;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+#sensor {
+  cursor: grab;
+  touch-action: none;
+}
+
+#sensor.dragging {
+  cursor: grabbing;
+}
+
+.hint {
+  color: var(--dim);
+  font-size: 0.74rem;
+  margin-top: 0.4rem;
+}
+
+.stage-row {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+
+.stage-row .chip {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  padding: 0.16rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--dim);
+}
+
+.stage-row .chip.on {
+  color: var(--fg);
+  border-color: var(--accent);
+}
+
+/* --- numbers --- */
+
+table.readout {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+table.readout th {
+  text-align: left;
+  font-weight: 400;
+  color: var(--dim);
+  padding: 0.18rem 0.5rem 0.18rem 0;
+  white-space: nowrap;
+  font-family: system-ui, sans-serif;
+  font-size: 11.5px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+table.readout td {
+  padding: 0.18rem 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0.7rem;
+  border-radius: 4px;
+  border: 1px solid;
+}
+
+.badge.correct {
+  color: var(--good);
+  border-color: #2e6b47;
+  background: #11261a;
+}
+
+.badge.wrong_confident {
+  color: var(--bad);
+  border-color: #7a2d2d;
+  background: #2a1414;
+}
+
+.badge.rejected {
+  color: var(--warn);
+  border-color: #6d5520;
+  background: #241d0d;
+}
+
+.badge.no_solution {
+  color: var(--dim);
+  border-color: var(--line);
+  background: var(--panel-2);
+}
+
+/* --- benchmark scoreboard --- */
+
+.score {
+  display: flex;
+  align-items: baseline;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.score .big {
+  font-family: var(--mono);
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.tile {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+}
+
+.tile .k {
+  color: var(--dim);
+  font-size: 0.66rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.tile .v {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.1rem;
+}
+
+.tile.alarm {
+  border-color: #7a2d2d;
+  background: #2a1414;
+}
+
+.tile.alarm .v {
+  color: var(--bad);
+}
+
+progress {
+  width: 100%;
+  height: 6px;
+  margin-top: 0.7rem;
+  accent-color: var(--accent);
+}
+
+/* --- charts --- */
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 0.9rem;
+  margin-top: 0.9rem;
+}
+
+.chart h3 {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin: 0 0 0.5rem;
+}
+
+/* --- trial table --- */
+
+.table-scroll {
+  overflow-x: auto;
+  margin-top: 0.6rem;
+}
+
+table.trials {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+table.trials th {
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+  color: var(--dim);
+  font-weight: 500;
+  text-align: right;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+  user-select: none;
+}
+
+table.trials th:first-child,
+table.trials td:first-child {
+  text-align: left;
+}
+
+table.trials td {
+  padding: 0.22rem 0.5rem;
+  text-align: right;
+  border-bottom: 1px solid #171d28;
+  font-variant-numeric: tabular-nums;
+}
+
+table.trials tbody tr {
+  cursor: pointer;
+}
+
+table.trials tbody tr:hover {
+  background: var(--panel-2);
+}
+
+table.trials td.o-correct {
+  color: var(--good);
+}
+
+table.trials td.o-wrong_confident {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+table.trials td.o-rejected {
+  color: var(--warn);
+}
+
+table.trials td.o-no_solution {
+  color: var(--dim);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.compare {
+  margin-top: 0.9rem;
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+.compare table {
+  border-collapse: collapse;
+}
+
+.compare td,
+.compare th {
+  padding: 0.22rem 0.8rem 0.22rem 0;
+  text-align: right;
+}
+
+.compare th:first-child,
+.compare td:first-child {
+  text-align: left;
+}
+
+.note {
+  color: var(--dim);
+  font-size: 0.76rem;
+  margin-top: 0.6rem;
+}
+
+[hidden] {
+  display: none !important;
+}

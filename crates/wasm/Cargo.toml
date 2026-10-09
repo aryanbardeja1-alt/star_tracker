@@ -1,0 +1,16 @@
+[package]
+name = "tracker-wasm"
+description = "wasm-bindgen wrapper around tracker-core."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde.workspace = true
+serde-wasm-bindgen.workspace = true
+tracker-core.workspace = true
+wasm-bindgen.workspace = true

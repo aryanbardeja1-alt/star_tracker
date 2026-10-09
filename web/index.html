@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2032%2032%27%3E%3Crect%20width=%2732%27%20height=%2732%27%20fill=%27%230b0f14%27/%3E%3Cpath%20d=%27M16%203l2.2%2010.8L29%2016l-10.8%202.2L16%2029l-2.2-10.8L3%2016l10.8-2.2z%27%20fill=%27%23e6edf3%27/%3E%3C/svg%3E"
+    />
+    <title>Star Tracker</title>
+    <meta
+      name="description"
+      content="Lost-in-space star tracker: image to centroids to star identification to attitude, scored over a thousand trials in the browser."
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Star Tracker</h1>
+      <span class="sub">lost-in-space attitude determination</span>
+      <span class="build" id="build">loading&hellip;</span>
+    </header>
+
+    <nav role="tablist" aria-label="Views">
+      <button role="tab" id="tab-pattern" aria-selected="true" aria-controls="view-pattern">
+        Single Pattern
+      </button>
+      <button role="tab" id="tab-bench" aria-selected="false" aria-controls="view-bench">
+        Benchmark
+      </button>
+      <button role="tab" id="tab-track" aria-selected="false" aria-controls="view-track">
+        Tracking
+      </button>
+    </nav>
+
+    <main>
+      <!-- ================= Single Pattern ================= -->
+      <section id="view-pattern" role="tabpanel" aria-labelledby="tab-pattern">
+        <div class="panel">
+          <h2>Pattern</h2>
+          <div class="controls">
+            <button class="action primary" id="generate">Generate random pattern</button>
+            <label>
+              Base seed
+              <input type="text" id="seed" value="42" inputmode="numeric" />
+            </label>
+            <label>
+              Trial
+              <input type="number" id="trial-index" value="0" min="0" step="1" />
+            </label>
+            <label>
+              Preset
+              <select id="preset">
+                <option value="easy">easy</option>
+                <option value="nominal" selected>nominal</option>
+                <option value="hard">hard</option>
+                <option value="brutal">brutal</option>
+              </select>
+            </label>
+            <button class="action" id="identify">Identify</button>
+          </div>
+
+          <details class="advanced">
+            <summary>Advanced &mdash; raw SimConfig</summary>
+            <div class="grid-fields" id="advanced-fields"></div>
+            <p class="note">
+              Changing the field of view or the database magnitude cut rebuilds the pair
+              database, which takes about 150&nbsp;ms.
+            </p>
+          </details>
+        </div>
+
+        <div class="split">
+          <div class="stack">
+            <div class="panel">
+              <h2>Sensor</h2>
+              <div class="canvas-wrap">
+                <canvas id="sensor" width="1024" height="1024"></canvas>
+              </div>
+              <div class="stage-row" id="stages">
+                <span class="chip" data-stage="image">image</span>
+                <span class="chip" data-stage="centroids">centroids</span>
+                <span class="chip" data-stage="pyramid">pyramid</span>
+                <span class="chip" data-stage="matched">matched</span>
+                <span class="chip" data-stage="verified">verified</span>
+              </div>
+              <p class="hint">
+                Scroll to zoom, drag to pan, double-click to reset. Labels show the IAU
+                name where a star has one, otherwise its HIP number.
+              </p>
+            </div>
+          </div>
+
+          <div class="stack">
+            <div class="panel">
+              <h2>Outcome</h2>
+              <div id="outcome-badge"><span class="badge no_solution">&mdash;</span></div>
+              <table class="readout" id="result-table"></table>
+            </div>
+
+            <div class="panel">
+              <h2>Sky</h2>
+              <div class="canvas-wrap">
+                <canvas id="sky" width="760" height="400"></canvas>
+              </div>
+              <p class="hint">
+                Mollweide, equatorial. Blue is the true boresight, orange the estimate, with
+                the field footprint outlined.
+              </p>
+            </div>
+
+            <div class="panel">
+              <h2>Stage timings</h2>
+              <table class="readout" id="timing-table"></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Benchmark ================= -->
+      <section id="view-bench" role="tabpanel" aria-labelledby="tab-bench" hidden>
+        <div class="panel">
+          <h2>Run</h2>
+          <div class="controls">
+            <label>
+              Trials
+              <input type="number" id="b-trials" value="1000" min="1" step="1" />
+            </label>
+            <label>
+              Base seed
+              <input type="text" id="b-seed" value="42" inputmode="numeric" />
+            </label>
+            <label>
+              Preset
+              <select id="b-preset">
+                <option value="easy">easy</option>
+                <option value="nominal" selected>nominal</option>
+                <option value="hard">hard</option>
+                <option value="brutal">brutal</option>
+              </select>
+            </label>
+            <label>
+              Workers
+              <input type="number" id="b-workers" value="4" min="1" max="16" step="1" />
+            </label>
+            <button class="action primary" id="b-run">Run</button>
+            <button class="action" id="b-cancel" disabled>Cancel</button>
+            <button class="action" id="b-compare">Compare presets</button>
+          </div>
+          <progress id="b-progress" value="0" max="1"></progress>
+          <p class="note" id="b-status">Idle.</p>
+        </div>
+
+        <div class="panel" style="margin-top: 0.9rem">
+          <h2>Scoreboard</h2>
+          <div class="score">
+            <div>
+              <div class="tile-k" style="color: var(--dim); font-size: 0.66rem; letter-spacing: 0.07em; text-transform: uppercase">
+                Score
+              </div>
+              <div class="big" id="b-score">&mdash;</div>
+            </div>
+            <div class="tiles" style="flex: 1; margin-top: 0">
+              <div class="tile" id="tile-wrong">
+                <div class="k">Wrong confident</div>
+                <div class="v" id="b-wrong">&mdash;</div>
+              </div>
+              <div class="tile">
+                <div class="k">Rejected</div>
+                <div class="v" id="b-rejected">&mdash;</div>
+              </div>
+              <div class="tile">
+                <div class="k">No solution</div>
+                <div class="v" id="b-nosol">&mdash;</div>
+              </div>
+              <div class="tile">
+                <div class="k">ID precision</div>
+                <div class="v" id="b-precision">&mdash;</div>
+              </div>
+              <div class="tile">
+                <div class="k">ID recall</div>
+                <div class="v" id="b-recall">&mdash;</div>
+              </div>
+              <div class="tile">
+                <div class="k">Median err &Prime;</div>
+                <div class="v" id="b-median">&mdash;</div>
+              </div>
+              <div class="tile">
+                <div class="k">p95 err &Prime;</div>
+                <div class="v" id="b-p95">&mdash;</div>
+              </div>
+              <div class="tile">
+                <div class="k">Solve ms</div>
+                <div class="v" id="b-solve">&mdash;</div>
+              </div>
+            </div>
+          </div>
+          <div class="compare" id="b-compare-out" hidden></div>
+        </div>
+
+        <div class="charts">
+          <div class="panel chart">
+            <h3>Total attitude error (log scale)</h3>
+            <div class="canvas-wrap"><canvas id="c-hist" width="640" height="260"></canvas></div>
+          </div>
+          <div class="panel chart">
+            <h3>Cross-boresight against roll</h3>
+            <div class="canvas-wrap"><canvas id="c-scatter" width="640" height="260"></canvas></div>
+          </div>
+          <div class="panel chart">
+            <h3>Outcomes</h3>
+            <div class="canvas-wrap"><canvas id="c-outcomes" width="640" height="260"></canvas></div>
+          </div>
+          <div class="panel chart">
+            <h3>Solve time per frame</h3>
+            <div class="canvas-wrap"><canvas id="c-timing" width="640" height="260"></canvas></div>
+          </div>
+          <div class="panel chart">
+            <h3>Success rate against stars detected</h3>
+            <div class="canvas-wrap"><canvas id="c-detected" width="640" height="260"></canvas></div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top: 0.9rem">
+          <h2>Trials</h2>
+          <div class="controls">
+            <button class="action" id="b-csv">Export CSV</button>
+            <button class="action" id="b-json">Export JSON summary</button>
+          </div>
+          <div class="table-scroll">
+            <table class="trials" id="b-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="pager">
+            <button class="action" id="b-prev">Prev</button>
+            <span id="b-page">&mdash;</span>
+            <button class="action" id="b-next">Next</button>
+            <span style="margin-left: auto">Click a row to open that trial in Single Pattern.</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-track" role="tabpanel" aria-labelledby="tab-track" hidden>
+        <p class="lede">
+          Once an attitude is known the next frame is a much smaller problem: the
+          camera has barely moved, so the stars it is about to see are already
+          predictable. Tracking matches against that prediction instead of
+          searching the whole sky. Both run on every frame here, from the same
+          image, so the comparison is of two identifications of one frame.
+        </p>
+
+        <div class="controls">
+          <label>Preset
+            <select id="t-preset">
+              <option value="easy">easy</option>
+              <option value="nominal" selected>nominal</option>
+              <option value="hard">hard</option>
+              <option value="brutal">brutal</option>
+            </select>
+          </label>
+          <label>Base seed <input id="t-seed" type="text" value="42" size="10" /></label>
+          <label>Frames <input id="t-frames" type="number" value="60" min="2" max="500" /></label>
+          <label>Rate °/s <input id="t-rate" type="number" value="5" min="0" max="200" step="0.5" /></label>
+          <button id="t-run" class="primary">Run slew</button>
+          <span id="t-status" class="status"></span>
+        </div>
+
+        <div class="tiles">
+          <div class="tile"><div class="k">Held</div><div id="t-held" class="v">—</div></div>
+          <div class="tile" id="t-tile-wrong"><div class="k">Wrong confident</div><div id="t-wrong" class="v">—</div></div>
+          <div class="tile"><div class="k">Reacquisitions</div><div id="t-reacq" class="v">—</div></div>
+          <div class="tile"><div class="k">Median error</div><div id="t-error" class="v">—</div></div>
+          <div class="tile"><div class="k">Tracked</div><div id="t-tracked" class="v">—</div></div>
+          <div class="tile"><div class="k">Whole sky</div><div id="t-lost" class="v">—</div></div>
+          <div class="tile"><div class="k">Speedup</div><div id="t-speedup" class="v">—</div></div>
+        </div>
+
+        <div class="charts">
+          <div class="panel chart">
+            <h3>Identification time per frame (log scale)</h3>
+            <div class="canvas-wrap"><canvas id="t-timing" width="640" height="260"></canvas></div>
+          </div>
+          <div class="panel chart">
+            <h3>Attitude error per frame</h3>
+            <div class="canvas-wrap"><canvas id="t-error-chart" width="640" height="260"></canvas></div>
+          </div>
+        </div>
+
+        <p id="t-note" class="note"></p>
+
+        <table id="t-table" class="rows"></table>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

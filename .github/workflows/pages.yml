@@ -1,0 +1,91 @@
+name: Pages
+
+# Builds the WASM module and the static site, checks them, and publishes to
+# GitHub Pages. The site is entirely static: the catalogue is embedded in the
+# WASM binary, so there is nothing to serve but files.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A queued run supersedes a pending one, but never cancels a publish midway.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install the Rust toolchain
+        run: |
+          rustup show active-toolchain || rustup toolchain install
+          rustup target add wasm32-unknown-unknown
+          rustup component add rustfmt clippy
+
+      - name: Cache cargo and target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+
+      - name: Check formatting and lints
+        run: |
+          cargo fmt --all --check
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo clippy -p tracker-wasm --target wasm32-unknown-unknown -- -D warnings
+
+      # The statistical tests are release-only by design; see docs/SPEC.md.
+      - name: Test
+        run: cargo test --workspace --release
+
+      - name: Install wasm-pack
+        run: cargo install wasm-pack --locked
+
+      - name: Build the WASM module
+        run: wasm-pack build crates/wasm --target web --release --out-dir ../../web/src/pkg
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Build the site
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      # Parity between the two targets is the property that makes the browser
+      # numbers trustworthy, so it gates the publish.
+      - name: Native/WASM parity
+        run: |
+          wasm-pack build crates/wasm --target nodejs --release --out-dir pkg-node
+          node scripts/parity.mjs
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
